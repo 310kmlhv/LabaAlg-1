@@ -17,16 +17,45 @@ int getRandomNumber(int min, int max) {
 
 // Функция для сортировки методом пузырька
 void bubbleSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {
-        bool swapped = false;
-        for (int j = 0; j < n - i - 1; j++) {
+    int N = arr.size() - 1;   // Количество элементов
+    int BOUND = N;        // Изначально BOUND равен N
+    int t, temp;
+    
+    while (BOUND > 1) {   // Пока BOUND не уменьшится до 1
+        t = 0;  // Изначально предполагаем, что обменов не будет
+        
+        for (int j = 0; j < BOUND - 1; ++j) {
+            // Если текущий элемент больше следующего, меняем их местами
             if (arr[j] > arr[j + 1]) {
-                swap(arr[j], arr[j + 1]);
-                swapped = true;
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+                t = j;  // Запоминаем индекс последнего произведенного обмена
             }
         }
-        if (!swapped) break; // Если обменов не было, массив уже отсортирован
+        
+        // Если не было произведено ни одного обмена, завершаем
+        if (t == 0) {
+            break;
+        }
+        
+        // Устанавливаем BOUND на позицию последнего произведенного обмена
+        BOUND = t;
+    }
+}
+
+// Функция для сортировки вставками
+void sortS(int* arK, int N) {
+    for (int j = 1; j < N; ++j) {
+        int K = arK[j]; // элемент для вставки;
+        int i = j - 1;  // номер последнего элемента сортированной части массива;
+        while (i >= 0 && arK[i] > K) {
+            arK[i + 1] = arK[i];  // выполнить сдвиг элемента вправо;
+            --i;
+        }
+        if (++i < j) {
+            arK[i] = K;  // вставить элемент;
+        }
     }
 }
 
@@ -47,7 +76,7 @@ void printDuration(microseconds duration) {
 
     cout << millisec.count() 
          << setfill('0') << setw(3) << microsec
-         << " micorsec" << endl;
+         << " microsec" << endl;
 }
 
 // Функция сравнения для qsort
@@ -64,6 +93,7 @@ int main() {
     for (int arraySize : sizes) {
         vector<int> arr(arraySize); // Инициализация вектора с размером arraySize
         vector<int> arrCopy(arraySize); // Копия для qsort
+        vector<int> arrCopyS(arraySize); // Копия для sortS
 
         // Генерация случайных чисел в зависимости от размера массива
         if (arraySize < 500) {
@@ -76,11 +106,12 @@ int main() {
             }
         }
 
-        // Копируем массив для qsort
+        // Копируем массив для qsort и sortS
         arrCopy = arr;
+        arrCopyS = arr;
 
         // Вывод несортированного массива в файл
-        string originalFile = "d" + to_string(arraySize) + ".txt";
+        string originalFile = "f" + to_string(arraySize) + ".txt";
         printArrayToFile(arr, originalFile);
 
         // Замер времени сортировки методом пузырька
@@ -94,7 +125,7 @@ int main() {
         printDuration(durationBubble);
 
         // Вывод отсортированного массива в файл
-        string sortedFile = "d" + to_string(arraySize) + "-s" + ".txt";
+        string sortedFile = "f" + to_string(arraySize) + "-s" + ".txt";
         printArrayToFile(arr, sortedFile);
 
         // Замер времени стандартной функции qsort
@@ -106,6 +137,16 @@ int main() {
         microseconds durationQSort = duration_cast<microseconds>(stopQSort - startQSort);
         cout << "qsort time for " << arraySize << " elements: ";
         printDuration(durationQSort);
+
+        // Замер времени сортировки методом вставки (sortS)
+        high_resolution_clock::time_point startSortS = high_resolution_clock::now();
+        sortS(arrCopyS.data(), arrCopyS.size());
+        high_resolution_clock::time_point stopSortS = high_resolution_clock::now();
+
+        // Подсчет времени выполнения сортировки вставками
+        microseconds durationSortS = duration_cast<microseconds>(stopSortS - startSortS);
+        cout << "Insertion sort (sortS) time for " << arraySize << " elements: ";
+        printDuration(durationSortS);
 
         cout << "---------------------------------------------------" << endl;
     }
